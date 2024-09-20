@@ -1,0 +1,353 @@
+---
+title: "Trabajo_1"
+author: "Fatima_Trujillo - 20181324"
+date: "2024-08-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Exploración de datos sobre pensiones de jubilación en Amazonas
+
+Para el presente trabajo, se importa la base de pensiones a diciembre de 2023, de la ONP. Dada la magnitud de la base (como se verá más adelante), se escoge un subgrupo de pensionados mayores de 65 años de Amazonas, como caso de estudio. A continuación se muestra la exploración de la base de datos, y las manipulaciones realizadas para obtener resultados.
+
+## Acondicionamiento del entorno de trabajo
+
+Primero, acondicionamos el entorno de trabajo, llamando a las librerías correspondientes.
+
+```{r}
+
+#Llamamos librerías
+
+library(readxl)
+library(tidyverse)
+library(ggthemes)
+
+```
+
+## Importación y exploración de base de datos
+
+Segundo, realizamos la importación y exploración inicial de la base de datos.
+
+```{r, warning=FALSE}
+
+data1 <- read_xlsx("Pensionistas_SNP_Diciembre2023.xlsx") #Importamos el archivo, aparecen advertencias sobre fechas, que no son de nuestro interés, por lo que las omitimos
+
+head(data1) #Mostramos las primeras observaciones
+```
+
+```{r}
+
+str(data1) #Descripción de la base
+
+```
+Como se puede observar, se trata de una base de datos de 656,993 observaciones y 25 variables, cuyos nombres se muestran a continuación.
+
+
+Nombres de las variables de la base:
+
+```{r}
+
+names(data1) 
+
+```
+
+## Variables relevantes
+
+Se epxploran las variables relevantes:
+
+###Edad
+
+Para la variable edadpen, que representa la edad del benficiario:
+
+```{r}
+
+summary(data1$edadpen, na.rm = t) #Mostramos estadísticas principales con summary
+
+```
+```{r}
+
+#Moda
+
+frecuencias <- table(data1$edadpen) #Generamos una tabla de frecuencias para hallar el valor que más se repite
+
+# Encontramos el valor con la mayor frecuencia
+moda_edad <- as.numeric(names(frecuencias)[frecuencias == max(frecuencias)])
+
+moda_edad
+
+```
+
+Se muestra que la edad de los pensionistas varía entre los 0 y los 110 años, con una media de 74 años y una moda de 71. No es extraño que existan pensionistas de 0 años, en tanto también existe la pensión por orfandad; sin embargo, estos serán filtrados de la base de datos.
+
+
+###Sexo
+
+Para la variable sexopen, que representa el sexo del benficiario:
+
+```{r}
+
+#Distribución
+
+tab_sexo <- table(data1$sexopen) #Generamos una tabla para hallar las propociones
+
+prop.table(tab_sexo) * 100 #Hallamos las proporciones y convertimos a porcentajes
+
+```
+Las proporciones son similares para hombres y mujeres; se observa que una mayor parte de pensionistas son hombres, con una diferencia de 2.5 puntos porcentuales frente a las mujeres.
+
+###Departamento
+
+Para la variable dpto, que representa el departamento en el que vive el beneficiario:
+
+```{r}
+
+#Distribución
+
+tab_region <- table(data1$dpto) #Generamos una tabla para hallar las propociones
+
+prop.table(tab_region) *100 #Hallamos las proporciones y convertimos a porcentajes
+
+
+```
+
+Según la codificación de INEI, Lima (15) es la región en la cual viven la mayor parte de pensionistas, representando el 51.6% del total; mientras que la región escogida para el caso de estudio, Amazonas (01)  solo representa el 0.2% del total. Dada la magnitud de la base, se trabaja con un departamento que representa solo una pequeña parte del total de la base.
+
+Nota: Si bien sería ideal recodificar los valores numéricos de esta variable para identificarlos con el departamento al que corresponde el código, no se realiza tal recodificación, en tanto se opta por trabajar únicamente con un departamento.
+
+###Años de aporte
+
+Para la variable anios_aporte, que representa los años de aporte del pensionista:
+
+```{r}
+
+summary(data1$anios_aporte) #Mostramos estadísticas principales con summary
+
+```
+```{r}
+
+#Moda
+
+frecuencias <- table(data1$anios_aporte) #Generamos una tabla de frecuencias para hallar el valor que más se repite
+
+# Encontramos el valor con la mayor frecuencia
+moda_edad <- as.numeric(names(frecuencias)[frecuencias == max(frecuencias)])
+
+moda_edad
+
+```
+
+Se muestran los años de aporte entre 5 y 47 años, con una media de 25 años de aporte y una moda de 20. Existe una cantidad importante de missing values, lo cual se debe a que no se muestran los años de aporte para los beneficiarios parientes del aportante, como viudos, huérfanos, etc. Sin embargo, para los propósitos del presente informe, se filtra solo a las pensiones de jubilados, que no presentan dicho problema.
+
+###Pensión
+
+Para la variable pension, que representa la pensión recibida por el benficiario:
+
+```{r}
+
+summary(data1$pension)  #Mostramos estadísticas principales con summary
+
+```
+
+Se muestra que las pensiones tienen un mínimo de 0 soles y un máximo de 6,126 soles mensuales, con una media de 548 soles. Dado que esta es una variable con mucha más varianza, se opta por no incluir la moda.
+
+##Otras variables
+
+Además de las cinco variables seleccionadas, se explora rápidamente otras variables, en tanto serán usadas en el posterior análisis.
+
+###Bonificaciones
+
+Representan distintos tipos de bonificaciones adjudicadas a los beneficiarios, además de la pensión.
+
+Para la variable bonif1:
+
+```{r}
+
+summary(data1$bonif1) 
+
+```
+
+Para la variable bonif2:
+
+```{r}
+
+summary(data1$bonif2) 
+
+```
+
+Para la variable bonif3:
+
+```{r}
+
+summary(data1$bonif3) 
+
+
+```
+
+Para la variable bonif4:
+
+
+```{r}
+
+summary(data1$bonif4) 
+
+```
+
+Para la variable bonif5:
+
+```{r}
+
+summary(data1$bonif5) 
+
+```
+
+Para la variable bonif6:
+
+```{r}
+
+summary(data1$bonif6) 
+
+```
+
+Para la variable bonif7:
+
+```{r}
+
+summary(data1$bonif7) 
+
+```
+
+Para la variable bonif8:
+
+```{r}
+
+summary(data1$bonif8) 
+
+```
+
+Para la variable bonif9:
+
+```{r}
+
+summary(data1$bonif9) 
+
+```
+Se observa que la mayor parte de observaciones son missing values, ya que se trata de bonificaciones específicas, no recibidas por la mayor parte de beneficiarios. Existen dos bonificaciones (bonif2 y bonif9), que son de tipo lógico, por lo que serán excluidas del análisis.
+
+###Tipo de prestación
+
+Se explora también la variable prestacion, que representa el tipo de pensión que recibe el beneficiario, que pueden ser invalidez, jubilación, viudez, orfandad o ascendencia. Para los propósitos del presente informe, solo mantendremos los de jubilación 
+
+```{r}
+
+#Distribución
+
+tab_jub <- table(data1$prestacion) #Generamos una tabla para hallar las proporciones
+
+prop.table(tab_jub)*100 #Hallamos las proporciones y convertimos a porcentajes
+
+```
+Como se muestra, el tipo de prestación más importante es el 2, que representa a los jubilados y constituye el foco del presente informe.
+
+## Manipulación de la base de datos
+
+Se modifica la base de datos para poder obtener los indicadores de nuestro interés:
+
+```{r}
+
+data2 <- data1 %>% 
+  filter(edadpen >= 65, prestacion == 2, dpto == 1) %>% #Nos quedamos con los jubilados mayores de 65 años de Amazonas
+  mutate(sexo = case_when(sexopen == 0 ~ "Hombre",
+                          sexopen == 1 ~"Mujer")) %>%  #Creamos una variable de sexo, para identificar la dummy sexopen
+  mutate(bonificaciones = rowSums(across(c(bonif1, bonif3, bonif4, bonif5, bonif6, bonif7, bonif8), ~replace_na(., 0)))) %>%  #Agregamos la bonificaciones identificadas, excluyendo las de tipo lógico
+  mutate(total = rowSums(across(c(pension, bonificaciones)))) %>%  #Creamos una variable del total recibido, incluyendo la pensión y las bonificaciones
+  mutate(canasta = case_when(total < 512.5 ~ "Menor a medio sueldo min",
+                              total <= 1025 ~ "Mayor a medio sueldo min, menor a sueldo min",
+                              total > 1025 ~ "Mayor a sueldo min")) %>% #Creamos escalas para el total recibido
+  select(sexo, edadpen, dpto, anios_aporte, pension, bonificaciones, total, canasta) %>% #Nos quedamos con las variables de interés
+  arrange(total) # Ordenamos según el total recibido por el beneficiario
+
+
+
+```
+
+
+
+## Gráficos
+
+Generaremos dos gráficos a partir de la pensión recibida por los jubilados.
+
+###Dispersión 
+
+Generamos un gráfico de dispersión entre los años de aporte y únicamente la pensión recibida, según sexo.
+
+```{r}
+
+data2 |> 
+  ggplot() +
+  aes(x = anios_aporte, y = pension, color = sexo) + #Incluimos nuestras dos variables de interés y nuestro diferenciador por sexo
+  geom_point() +
+  facet_wrap(~ sexo) + #Separamos en dos gráficos distintos según sexo
+  labs(
+    title = "Relación entre años de aporte y pensión según el sexo",
+    x = "Años de Aporte",
+    y = "Pensión",
+    color = "Sexo",
+    caption = "Fuente: ONP\nElaboración: Fátima Trujillo" #Incluimos etiquetas y notas
+  ) +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set1") +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+    plot.caption = element_text(hjust = 0, size = 10),
+    axis.title = element_text(size = 12),
+    legend.position = "bottom",
+    legend.text = element_text(size = 10)
+  )
+
+
+```
+
+Lo mostrado por los gráficos es coherente con la legislación actual (con algunas expceciones), ya que ante un mínimo de 20 años de aporte, se recibe una pensión de, como mínimo, 500 soles y, como máximo, 893 soles. Aun así, se observa una relación débil entre los años de aporte y el monto de pensión recibido, independientemente del sexo.
+
+###Columnas 100% apiladas
+
+
+Generamos un gráfico de columna 100% apiladas, según la escala del monto total recibido por el pensionista (incluyendo bonificaciones), según sexo.
+
+```{r}
+
+#Creamos un df auxiliar para generar el gráfico
+
+prop_canasta <- data2 %>%
+  count(sexo, canasta) %>%
+  group_by(sexo) %>%
+  mutate(prop = n / sum(n)) #Generamos la proporción de las escalas según cada sexo
+
+# Creamos el gráfico
+prop_canasta  %>%
+  ggplot()+
+  aes(x = sexo, fill = canasta)+ #Generamos dos columnas, para hombre y mujeres y lo llenamos según la proporción de escalas
+  geom_bar(stat = "identity", position = "fill", aes(y = prop))+
+  geom_text(aes(label = scales::percent(prop, accuracy = 0.1), y = prop), size=3, 
+            position = position_fill(vjust = 0.5)) + #Personalizamos el gráfico
+  labs(title="Escalas de pensión total, según el sexo del pensionista", #Inlcuimos etiquetas y notas
+       x="",
+       y="",
+       fill = "Escala",
+       caption="Fuente: ONP\nElaboración: Fátima Trujillo") + 
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set3") +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+    plot.caption = element_text(hjust = 0, size = 10),
+    axis.title = element_text(size = 10),
+    legend.position = "bottom",
+    legend.text = element_text(size = 10))
+
+```
+
+Según se muestra, en comparación a los hombres, una mayor parte de mujeres recibe una pensión total menor a medio sueldo mínimo. Por otro lado, tanto para hombres como para mujeres, la proporción que recibe un total mayor a un sueldo mínimo es menor en ambos casos, teniendo como máximo 1.6% en el caso de las mujeres.
+
